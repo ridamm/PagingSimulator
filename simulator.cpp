@@ -57,7 +57,8 @@ vector< vector< page_table_entry* > > page_tables;
 vector< vector< page_table_entry* > > page_directories;
 vector< ram_entry* > ram_table;
 
-/*We are given two files :-
+/*
+    We are given two files :-
     process_list = list of all processes along with their sizes; memory sizes are multiples of kB, and is ensured to be less than 1GB, which is total address space available to any process;
     access_list = list of all memory accesses in sequence;
 */
@@ -111,6 +112,58 @@ void initialize_page_directories_AND_page_tables(){
     }
 }
 
+string getBitRepresentation(int a){
+    // returns bit representation having total bits = number of bits in logical_address_space (from MSB to LSB)
+    string result = "";
+    int numbits = 0;
+    while(a!=0 || numbits < logical_address_space){
+        result += (a%2==1)?'1':'0';
+        a = a/2;
+    }
+    reverse(result.begin(), result.end());
+    return result;
+}
+
+int getIntegerFromString(string s){
+    // s is in binary (MSB - LSB) form, returns the corresponding decimal integer
+    // Horner's Algorithm
+    int number = 0;
+    for(int i=0;i<s.size();i++){
+        number *= 2;
+        number += (int)(s[i]-'0');
+    }
+    return number;
+}
+
+int processVirtualAddress(int pid, int vAddress){
+    string bitString = getBitRepresentation(vAddress);
+    string directory_string = bitString.substr(0, page_directory_size);
+    string page_table_string = bitString.substr(page_directory_size, page_table_size - page_directory_size);
+    string page_offset_string = bitString.substr(page_table_size);
+    int pte_index = getIntegerFromString(directory_string) * pow(2, page_table_size - page_directory_size) + getIntegerFromString(page_table_string);
+    if(page_tables[pid][pte_index]->validity){
+        return (page_tables[pid][pte_index]->physical_page_number)*(pow(2, page_size)) + getIntegerFromString(page_offset_string); 
+    }
+    return -1;
+}
+
+int findInTLB(int id, int vAddress, int access_stamp){
+    for(int i=0;i<pow(2, tlb_size);i++){
+        if(tlb_table[i]!=NULL && tlb_table[i]->pid==id && tlb_table[i]->virtual_address==vAddress){
+            tlb_table[i]->recent_usage_time_stamp = access_stamp;
+            return tlb_table[i]->physical_address;
+        }
+    }
+    return -1;
+}
+
+void flushTLB(){
+    // empties the Translation lookaside buffer
+    for(int i=0;i<pow(2, tlb_size);i++){
+        tlb_table[i] = NULL;
+    }
+}
+
 int main(){
     // First read the process_list and allocate memory to the processes
     // Basically initialize the system
@@ -136,4 +189,33 @@ int main(){
 
     initialize_page_directories_AND_page_tables();
     // Now system has been initialized, now simulate according to the accesses;
+
+    if(access_list.is_open()){
+        string line;
+        int access_index = 0; // will use it as a time_stamp for replacement policies
+        while(getline(access_list, line)){
+            access_index++;
+            stringstream ss(line);
+            int access_PID, access_address;
+            ss >> access_PID;
+            ss >> access_address;
+            printf("process number %d has requested to access the virtual address : %d\n", access_PID, access_address);
+            int physical_address = findInTLB(access_PID, access_address, access_index);
+            printf("looking for the required entry in translation lookaside buffer\n");
+            if(physical_address != -1){
+                // corresponding entry was found in TLB
+                printf("Its a TLB hit, %d is accessed successfully\n", physical_address);
+                continue;
+            }
+            printf("Ohh no, a TLB miss\n");
+            physical_address = processVirtualAddress(access_PID, access_address);
+            if(physical_address != -1){
+                // required page was present in RAM
+                printf("Memory access %d was succesfull\n", physical_address);
+                // TODO: update TLB
+                continue; 
+            }
+            // TODO: Handle page fault by updating ram, flushing TLB
+        }
+    }
 }
