@@ -119,7 +119,12 @@ int main(){
     if(process_list.is_open()){
         string line;
         while(getline(process_list, line)){
-            requiredMemory.push_back(stoi(line));
+            stringstream ss(line);
+            string tempString;
+            while(ss){
+                ss >> tempString;
+            }
+            requiredMemory.push_back(stoi(tempString));
             pid_index++;
         }
         process_list.close();
@@ -130,6 +135,5 @@ int main(){
     // only the required pages will be initialized in page table
 
     initialize_page_directories_AND_page_tables();
-    // TODO: Now according to the space allocated, access file needs to be made
-    // Access file contains random accesses in the virtual space allocated to the corresponding process;
+    // Now system has been initialized, now simulate according to the accesses;
 }
