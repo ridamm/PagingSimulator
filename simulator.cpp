@@ -24,33 +24,7 @@ struct page_table_entry{
     }
 };
 
-struct tlb_entry{
-    int virtual_address;
-    int physical_address;
-    int pid; // Address space id is the ideal thing stored by OS
-    int arrival_time_stamp; //useful for FIFO replacement policy
-    int recent_usage_time_stamp; //useful for LRU implementation
 
-    tlb_entry(int v, int p, int id, int at, int rt){
-        virtual_address = v;
-        physical_address = p;
-        pid = id;
-        arrival_time_stamp = at;
-        recent_usage_time_stamp = rt;
-    }
-};
-
-struct ram_entry{
-    int pid;
-    int arrival_time_stamp; //useful for FIFO replacement policy
-    int recent_usage_time_stamp; //useful for LRU implementation
-
-    ram_entry(int id, int at, int rt){
-        pid = id;
-        arrival_time_stamp = at;
-        recent_usage_time_stamp = rt;
-    }
-};
 
 vector< tlb_entry* > tlb_table;
 vector< vector< page_table_entry* > > page_tables;
