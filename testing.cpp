@@ -8,10 +8,9 @@ int main()
 	pair<int,int> a={1,2},b={10,20},c={55,66};
 	v[0]=&a;
 	v[1]=&b;
-
-	std::vector<pair<int,int>*>::iterator it=v.begin();
-	*it=&c;
-	for(it=v.begin();it!= v.end();it++)
+	pair<int,int>* p=&c;
+	v[0]=p;
+	for(std::vector<pair<int,int>*>::iterator it=v.begin();it!= v.end();it++)
 	{
 		cout<<(*it)->first;
 	}
