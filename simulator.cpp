@@ -1,11 +1,11 @@
 #include <bits/stdc++.h>
-#include <ReplacementPolicies.h>
+#include "ReplacementPolicies.h"
 using namespace std;
 
 // Global variables for sizes (they are stored as log base 2)
 int logical_address_space = 21; //2 MB space
 int ram_size = 20; //1MB space
-int page_size = 10; //1kB
+int page_size = 11; //2kB
 int ram_table_size = ram_size - page_size;
 int page_table_size = logical_address_space - page_size;
 int page_directory_size = (page_table_size + 2) - (page_size); // Assuming one page_table_entry takes 4 bytes of space
@@ -62,10 +62,10 @@ void initialize_page_directories_AND_page_tables(){
         }
         // Fill page_table
         for(int j=0;j<pages_required;j++){
-            if(ram_page_index < ram_table_size){
+            if(ram_page_index < pow(2, ram_table_size)){
                 // there is space in ram, and this page can be mapped to some memory location in ram
                 page_tables[i].push_back(new page_table_entry(ram_page_index, true));
-                ram_table[ram_page_index] = new ram_entry(i, 0, 0); //TODO: at and rt are set to be 0 for time being, will look into it;
+                ram_table[ram_page_index] = new ram_entry(i, 0, 0); // at and rt are set to be 0 for time being;
                 ram_page_index++;
             }
             else{
@@ -83,6 +83,7 @@ string getBitRepresentation(int a){
     while(a!=0 || numbits < logical_address_space){
         result += (a%2==1)?'1':'0';
         a = a/2;
+        numbits++;
     }
     reverse(result.begin(), result.end());
     return result;
@@ -212,7 +213,7 @@ int main(){
             // one for which new entry has entered the ram - Also tlb needs to be updated for this
             // one for which already existing page has moved to hard disk now
             updatePageTableForNew(access_PID, access_address, old.second);
-            updatePageTableForOld(old.first->pid, old.second);
+            if(old.first != NULL) updatePageTableForOld(old.first->pid, old.second); //Actually some replacement took place
             tlb_entry* new_tlb_entry = new tlb_entry(access_address, physical_address, access_PID, access_index, access_index);
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
             printf("new tlb entry is inserted at %d\n", oldTLB.second);

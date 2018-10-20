@@ -42,11 +42,11 @@ struct ram_entry{
 
 template <typename T>
 pair<T*, int> tryFillingTable(vector<T*> &table, T* new_entry){
-	vector<T*>::iterator repl=table.begin();
+	typename vector<T*>::iterator repl=table.begin();
 	int old_index = -1;
 	//check the table for the earliest empty space
 	int i = 0;
-	for(vector<T*>::iterator it=table.begin();it!=table.end();it++)
+	for(typename vector<T*>::iterator it=table.begin();it!=table.end();it++)
 	{
 		if((*it) == NULL)
 		{
@@ -85,11 +85,11 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	if(policy_type==0)
 	{
 		int min_arrival_time=INT_MAX; 
-		vector<T*>::iterator repl=table.begin();
+		typename vector<T*>::iterator repl=table.begin();
 
 		//check the table for the earliest/first entry
 		int i = 0;
-		for(vector<T*>::iterator it=table.begin();it!=table.end();it++)
+		for(typename vector<T*>::iterator it=table.begin();it!=table.end();it++)
 		{
 			if((*it)->arrival_time_stamp<min_arrival_time)
 			{
@@ -107,11 +107,11 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	else if(policy_type==1)
 	{
 		int min_recent_usage=INT_MAX; 
-		vector<T*>::iterator repl=table.begin();
+		typename vector<T*>::iterator repl=table.begin();
 
 		//check the table for the least recently used entry
 		int i = 0;
-		for(vector<T*>::iterator it=table.begin();it!=table.end();it++)
+		for(typename vector<T*>::iterator it=table.begin();it!=table.end();it++)
 		{
 			if((*it)->recent_usage_time_stamp<min_recent_usage)
 			{
