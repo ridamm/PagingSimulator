@@ -21,6 +21,9 @@ vector< vector< page_table_entry* > > page_tables;
 vector< vector< page_table_entry* > > page_directories;
 vector< ram_entry* > ram_table;
 
+int page_faults = 0;
+int tlb_misses = 0;
+
 /*
     We are given two files :-
     process_list = list of all processes along with their sizes; memory sizes are multiples of kB, and is ensured to be less than 1GB, which is total address space available to any process;
@@ -193,7 +196,7 @@ int main(){
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
                 continue;
             }
-            printf("----> Ohh no, a TLB miss\n");
+            printf("----> Ohh no, a TLB miss\n"); tlb_misses++;
             physical_address = processVirtualAddress(access_PID, access_address);
             if(physical_address != -1){
                 // required page was present in RAM
@@ -205,7 +208,7 @@ int main(){
                 continue; 
             }
             // Handle page fault by updating ram, flushing TLB
-            printf("----> Page fault occured, flushing existing TLB, updating ram\n");
+            printf("----> Page fault occured, flushing existing TLB, updating ram\n"); page_faults++;
             flushTLB();
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
@@ -220,5 +223,9 @@ int main(){
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
             printf("new tlb entry is inserted at %d\n", oldTLB.second);
         }
+        access_list.close();
     }
+    printf("----------------------------------\n");
+    printf("Total Number of TLB Misses  : %d\n", tlb_misses);
+    printf("Total number of page faults : %d\n", page_faults);
 }
