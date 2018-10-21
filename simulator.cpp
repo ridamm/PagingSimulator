@@ -12,7 +12,7 @@ int page_directory_size = (page_table_size + 2) - (page_size); // Assuming one p
 int tlb_size = 7; //2^7 entries
 int ram_page_index = 0; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
-int replacement_policy = 0; //{0, 1, 2} for various algorithms
+int replacement_policy = 2; //{0, 1, 2} for various algorithms
 int pid_index = 0;
 vector<int> requiredMemory; // stores memory requirements for processes (in multiples of kB)
 
