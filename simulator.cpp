@@ -193,7 +193,7 @@ int main(){
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
                 continue;
             }
-            printf("Ohh no, a TLB miss\n");
+            printf("----> Ohh no, a TLB miss\n");
             physical_address = processVirtualAddress(access_PID, access_address);
             if(physical_address != -1){
                 // required page was present in RAM
@@ -205,7 +205,7 @@ int main(){
                 continue; 
             }
             // Handle page fault by updating ram, flushing TLB
-            printf("Page fault occured, flushing existing TLB, updating ram\n");
+            printf("----> Page fault occured, flushing existing TLB, updating ram\n");
             flushTLB();
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);

@@ -194,10 +194,10 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	        }
 
 	        //replace the tlb/ram entry which will be accessed last(after the most time)
-	        int max_next_access=0,pos=0;
+	        int max_next_access=-1,pos=0;
 	        for(int i=0;i<next_access.size();i++)
 	        {
-	        	if(max_next_access>next_access[i])
+	        	if(max_next_access<next_access[i])
 	        	{
 	        		pos=i;
 	        		max_next_access=next_access[i];
