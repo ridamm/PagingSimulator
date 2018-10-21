@@ -2,6 +2,10 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+
+// int page_size = 11; //2kB
+int MAX_OFFSET=2047;
+
 struct tlb_entry{
     int virtual_address;
     int physical_address;
@@ -130,73 +134,84 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	//for optimal replacement
 	else if(policy_type==2)
 	{
-	// 	ifstream access_list("access_list.txt");
-	// 	if(access_list.is_open())
-	// 	{
-	//         string line;
-	//         int search_index = 0; //time_stamp of the memory accesses
-	//         std::vector<int> tlb_next_access(table.size(),INT_MAX); //stores when will the tlb entry be next accessed
+		ifstream access_list("access_list.txt");
+
+		int max_offset=0;
+		bool processing_ram_entry=false;
+		if(is_same<T,ram_entry>::value)
+		{
+			max_offset=MAX_OFFSET;
+			processing_ram_entry=true;
+		}
+
+		if(access_list.is_open())
+		{
+	        string line;
+	        int search_index = 0; //time_stamp of the memory accesses
+	        std::vector<int> next_access(table.size(),INT_MAX); //stores when will the tlb/ram entry be next accessed
 
 
-	//         while(getline(access_list, line))
-	//         {
-	//             search_index++;
-	//             stringstream ss(line);
-	//             int search_PID, search_address;
-	//             ss >> search_PID;
-	//             ss >> search_address;
+	        while(getline(access_list, line))
+	        {
+	            search_index++;
+	            stringstream ss(line);
+	            int search_PID, search_address;
+	            ss >> search_PID;
+	            ss >> search_address;
 
-	//             //Checking memory accesses that will be made after current access
-	//             if(search_index>access_index)
-	//             {
-	//             	bool foundall_nextaccesses=true;
-	//             	for(int i=0;i<table.size();i++)
-	//             	{
-	//             		bool found=false;
+	            //Checking memory accesses that will be made after current access
+	            if(search_index>access_index)
+	            {
+	            	bool foundall_nextaccesses=true;
+	            	for(int i=0;i<table.size();i++)
+	            	{
+	            		bool found=false;
 
-	//             		//if the memory accessed searched/read from file is found in tlb
-	//             		//update the value of its next access
-	//             		if(table[i]->pid==search_PID&&table[i]->virtual_address==search_address)
-	//             		{
-	//             			found=true;
-	//             			if(tlb_next_access[i]==INT_MAX)
-	//             			{
-	//             				tlb_next_access[i]=search_index;
-	//             			}
-	//             		}
+	            		//if the memory accessed searched/read from file is found in tlb/ram
+	            		//update the value of its next access
+	            		if(table[i]->pid==search_PID&&(table[i]->virtual_address<=search_address&&table[i]->virtual_address+max_offset>=search_address))
+	            		{
+	            			found=true;
+	            			if(next_access[i]==INT_MAX)
+	            			{
+	            				next_access[i]=search_index;
+	            			}
+	            		}
 
-	//             		//Next accesses of all tlb entries have not been found yet
-	//             		if(tlb_next_access[i]==INT_MAX)
-	//             			foundall_nextaccesses=false;
+	            		//Next accesses of all the tlb/ram entries have not been found yet
+	            		if(next_access[i]==INT_MAX)
+	            			foundall_nextaccesses=false;
 
-	//             		//If current search found in tlb and next accesses of all tlb entries have not been found yet
-	//             		if(!foundall_nextaccesses&&found)
-	//             			break;
-	//             	}
+	            		//If current search found in tlb/ram and next accesses of all tlb/ram entries have not been found yet
+	            		if(!foundall_nextaccesses&&found)
+	            			break;
+	            	}
 
-	//             	//Next accesses of all tlb entries found: no more seacrhing needed!
-	//             	if(foundall_nextaccesses)
-	//             		break;
-	//             }
-	//         }
+	            	//Next accesses of all tlb/ram entries found: no more seacrhing needed!
+	            	if(foundall_nextaccesses)
+	            		break;
+	            }
+	        }
 
-	//         //replace the tlb entry which will be accessed last(after the most time)
-	//         int max_next_access=0,pos=0;
-	//         for(int i=0;i<tlb_next_access.size();i++)
-	//         {
-	//         	if(max_next_access>tlb_next_access[i])
-	//         	{
-	//         		pos=i;
-	//         		max_next_access=tlb_next_access[i];
-	//         	}
-	//         }
+	        //replace the tlb/ram entry which will be accessed last(after the most time)
+	        int max_next_access=0,pos=0;
+	        for(int i=0;i<next_access.size();i++)
+	        {
+	        	if(max_next_access>next_access[i])
+	        	{
+	        		pos=i;
+	        		max_next_access=next_access[i];
+	        	}
+	        }
 
-	//         table[pos]=new_entry;
-	//     }
-	//     else
-	//     {
-	//     	printf("Unable to read memory accesses file\n");
-	//     }
+	        old_index=pos;
+	        old_entry=table[pos];
+	        table[pos]=new_entry;
+	    }
+	    else
+	    {
+	    	printf("Unable to read memory accesses file\n");
+	    }
 	}
 
 	else
