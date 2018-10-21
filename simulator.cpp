@@ -65,7 +65,8 @@ void initialize_page_directories_AND_page_tables(){
             if(ram_page_index < pow(2, ram_table_size)){
                 // there is space in ram, and this page can be mapped to some memory location in ram
                 page_tables[i].push_back(new page_table_entry(ram_page_index, true));
-                ram_table[ram_page_index] = new ram_entry(i, 0, 0); // at and rt are set to be 0 for time being;
+                int base_virtual_address = (page_tables[i].size() - 1)*pow(2, page_size);
+                ram_table[ram_page_index] = new ram_entry(i, base_virtual_address, 0, 0); // at and rt are set to be 0 for time being;
                 ram_page_index++;
             }
             else{
@@ -206,7 +207,8 @@ int main(){
             // Handle page fault by updating ram, flushing TLB
             printf("Page fault occured, flushing existing TLB, updating ram\n");
             flushTLB();
-            ram_entry* new_entry = new ram_entry(access_PID, access_index, access_index);
+            int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
+            ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
             pair<ram_entry*, int> old = replacement(replacement_policy, ram_table, new_entry, access_index);
             printf("new ram entry is inserted at %d\n", old.second);
             // Now we need to update pageTables of two processes

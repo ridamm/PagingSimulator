@@ -30,11 +30,13 @@ struct page_table_entry{
 
 struct ram_entry{
     int pid;
+	int virtual_address;
     int arrival_time_stamp; //useful for FIFO replacement policy
     int recent_usage_time_stamp; //useful for LRU implementation
 
-    ram_entry(int id, int at, int rt){
+    ram_entry(int id, int vAddress,int at, int rt){
         pid = id;
+		virtual_address = vAddress;
         arrival_time_stamp = at;
         recent_usage_time_stamp = rt;
     }
