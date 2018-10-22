@@ -3,8 +3,8 @@
 using namespace std;
 
 
-// int page_size = 11; //2kB
-int MAX_OFFSET=2047;
+int page_size = 11; //2kB
+int MAX_OFFSET=pow(2,page_size)-1;
 
 struct tlb_entry{
     int virtual_address;
