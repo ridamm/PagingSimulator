@@ -122,10 +122,10 @@ int findInTLB(int id, int VAddress, int access_stamp){
     return -1;
 }
 
-void flushTLB(){
+void updateTLB(int pAddress){
     // empties the Translation lookaside buffer
     for(int i=0;i<pow(2, tlb_size);i++){
-        tlb_table[i] = NULL;
+        if(tlb_table[i] != NULL && tlb_table[i]->physical_address==pAddress) tlb_table[i] = NULL;
     }
 }
 
@@ -205,7 +205,6 @@ int main(){
             }
             // Handle page fault by updating ram, flushing TLB
             printf("----> Page fault occured, flushing existing TLB, updating ram\n"); page_faults++;
-            flushTLB();
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
             pair<ram_entry*, int> old = replacement(replacement_policy, ram_table, new_entry, access_index);
@@ -214,8 +213,12 @@ int main(){
             // one for which new entry has entered the ram - Also tlb needs to be updated for this
             // one for which already existing page has moved to hard disk now
             updatePageTableForNew(access_PID, access_address, old.second);
-            if(old.first != NULL) updatePageTableForOld(old.first->pid, old.second); //Actually some replacement took place
-            tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, physical_address >> page_size, access_PID, access_index, access_index);
+            if(old.first != NULL){
+                //Actually some replacement took place
+                updatePageTableForOld(old.first->pid, old.second);
+                updateTLB(old.second);
+            }
+            tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, old.second /*new physical address*/, access_PID, access_index, access_index);
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
             printf("new tlb entry is inserted at %d\n", oldTLB.second);
         }
