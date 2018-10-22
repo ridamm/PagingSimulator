@@ -2,14 +2,9 @@
 #include "ReplacementPolicies.h"
 using namespace std;
 
-// Global variables for sizes (they are stored as log base 2)
-int logical_address_space = 21; //2 MB space
-int ram_size = 20; //1MB space
-int page_size = 11; //2kB
 int ram_table_size = ram_size - page_size;
 int page_table_size = logical_address_space - page_size;
 int page_directory_size = (page_table_size + 2) - (page_size); // Assuming one page_table_entry takes 4 bytes of space
-int tlb_size = 7; //2^7 entries
 int ram_page_index = 0; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
 int replacement_policy = 2; //{0, 1, 2} for various algorithms
@@ -116,11 +111,12 @@ int processVirtualAddress(int pid, int vAddress){
     return -1;
 }
 
-int findInTLB(int id, int vAddress, int access_stamp){
+int findInTLB(int id, int VAddress, int access_stamp){
+    int vAddress = VAddress/pow(2, page_size);
     for(int i=0;i<pow(2, tlb_size);i++){
         if(tlb_table[i]!=NULL && tlb_table[i]->pid==id && tlb_table[i]->virtual_address==vAddress){
             tlb_table[i]->recent_usage_time_stamp = access_stamp;
-            return tlb_table[i]->physical_address;
+            return tlb_table[i]->physical_address + (VAddress & ((int)pow(2, page_size) - 1));
         }
     }
     return -1;
@@ -201,7 +197,7 @@ int main(){
             if(physical_address != -1){
                 // required page was present in RAM
                 printf("Memory access %d was succesfull\n", physical_address);
-                tlb_entry* new_tlb_entry = new tlb_entry(access_address, physical_address, access_PID, access_index, access_index);
+                tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, physical_address >> page_size, access_PID, access_index, access_index);
                 pair<tlb_entry*, int> old = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
                 printf("new tlb entry is inserted at %d\n", old.second);
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
@@ -219,7 +215,7 @@ int main(){
             // one for which already existing page has moved to hard disk now
             updatePageTableForNew(access_PID, access_address, old.second);
             if(old.first != NULL) updatePageTableForOld(old.first->pid, old.second); //Actually some replacement took place
-            tlb_entry* new_tlb_entry = new tlb_entry(access_address, physical_address, access_PID, access_index, access_index);
+            tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, physical_address >> page_size, access_PID, access_index, access_index);
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
             printf("new tlb entry is inserted at %d\n", oldTLB.second);
         }
