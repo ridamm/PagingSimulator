@@ -140,12 +140,6 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 		ifstream access_list("access_list.txt");
 
 		int max_offset=MAX_OFFSET;
-		// bool processing_ram_entry=false;
-		// if(is_same<T,ram_entry>::value)
-		// {
-		// 	max_offset=MAX_OFFSET;
-		// 	processing_ram_entry=true;
-		// }
 
 		if(access_list.is_open())
 		{
