@@ -1,53 +1,7 @@
 #pragma once
 #include <bits/stdc++.h>
+#include "globalVariables.h"
 using namespace std;
-
-// Global variables for sizes (they are stored as log base 2)
-int logical_address_space = 5;
-int ram_size = 3;
-int page_size = 0;
-int MAX_OFFSET=pow(2,page_size)-1;
-int tlb_size = 2;
-
-struct tlb_entry{
-    int virtual_address;
-    int physical_address;
-    int pid; // Address space id is the ideal thing stored by OS
-    int arrival_time_stamp; //useful for FIFO replacement policy
-    int recent_usage_time_stamp; //useful for LRU implementation
-
-    tlb_entry(int v, int p, int id, int at, int rt){
-        virtual_address = v;
-        physical_address = p;
-        pid = id;
-        arrival_time_stamp = at;
-        recent_usage_time_stamp = rt;
-    }
-};
-
-struct page_table_entry{
-    int physical_page_number; // This has no significance in page_directory, will keep -1 throughout the code for page_directory
-    bool validity;
-
-    page_table_entry(int a, bool b){
-        physical_page_number = a;
-        validity = b;
-    }
-};
-
-struct ram_entry{
-    int pid;
-	int virtual_address;
-    int arrival_time_stamp; //useful for FIFO replacement policy
-    int recent_usage_time_stamp; //useful for LRU implementation
-
-    ram_entry(int id, int vAddress,int at, int rt){
-        pid = id;
-		virtual_address = vAddress;
-        arrival_time_stamp = at;
-        recent_usage_time_stamp = rt;
-    }
-};
 
 template <typename T>
 pair<T*, int> tryFillingTable(vector<T*> &table, T* new_entry){
@@ -139,7 +93,7 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	{
 		ifstream access_list("access_list.txt");
 
-		int max_offset=MAX_OFFSET;
+		int max_offset=pow(2, page_size) - 1;
 
 		if(access_list.is_open())
 		{

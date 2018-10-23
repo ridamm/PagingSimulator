@@ -1,11 +1,12 @@
 #include <bits/stdc++.h>
+#include "globalVariables.h"
 #include "ReplacementPolicies.h"
 using namespace std;
 
-int ram_table_size = ram_size - page_size;
-int page_table_size = logical_address_space - page_size;
-int page_directory_size = (page_table_size) - (page_size); // Assuming one page_table_entry takes 1 bytes of space
-int ram_page_index = 0; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
+int ram_table_size;
+int page_table_size;
+int page_directory_size; // Assuming one page_table_entry takes 1 bytes of space
+int ram_page_index; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
 int replacement_policy = 2; //{0, 1, 2} for various algorithms
 int pid_index = 0;
@@ -27,6 +28,22 @@ int tlb_misses = 0;
 */
 
 ifstream process_list("process_list.txt"), access_list("access_list.txt");
+
+void initialize_global_variables(){
+    cout << "Please specify the bits in virtual address space" << endl;
+    cin >> logical_address_space;
+    cout << "Please specify the bits in size of ram (2^k bytes, specify k)" << endl;
+    cin >> ram_size;
+    cout << "Please specify the bits in page size (2^k bytes, specify k)" << endl;
+    cin >> page_size;
+    cout << "Please specify the number of tlb entries (2^k entries, specify k)" << endl;
+    cin >> tlb_size;
+
+    ram_table_size = ram_size - page_size;
+    page_table_size = logical_address_space - page_size;
+    page_directory_size = (page_table_size) - (page_size);
+    ram_page_index = 0;
+}
 
 void initialize_tlb(){
     tlb_table.resize(pow(2, tlb_size));
@@ -130,30 +147,33 @@ void updateTLB(int pAddress){
     }
 }
 
-// void printTLBtable(){
-//     for(int i=0;i<pow(2, tlb_size);i++){
-//         if(tlb_table[i]==NULL){
-//             cout << "-------------EMPTY---------------" << endl;
-//         }
-//         else{
-//             printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
-//             tlb_table[i]->pid, tlb_table[i]->virtual_address, tlb_table[i]->physical_address,
-//             tlb_table[i]->arrival_time_stamp, tlb_table[i]->recent_usage_time_stamp);
-//         }
-//     }
-// }
+// These are the supporting print functions to live track ram and tlb
+// To do so, just uncommet the relevant code here and in main function
 
-// void printRAMtable(){
-//     for(int i=0;i<pow(2, ram_table_size);i++){
-//         if(ram_table[i]==NULL){
-//             cout << "-------------EMPTY---------------" << endl;
-//         }
-//         else{
-//             printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
-//             ram_table[i]->pid, ram_table[i]->virtual_address, i, ram_table[i]->arrival_time_stamp, ram_table[i]->recent_usage_time_stamp);
-//         }
-//     }
-// }
+/* void printTLBtable(){
+    for(int i=0;i<pow(2, tlb_size);i++){
+        if(tlb_table[i]==NULL){
+            cout << "-------------EMPTY---------------" << endl;
+        }
+        else{
+            printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
+            tlb_table[i]->pid, tlb_table[i]->virtual_address, tlb_table[i]->physical_address,
+            tlb_table[i]->arrival_time_stamp, tlb_table[i]->recent_usage_time_stamp);
+        }
+    }
+} */
+
+/* void printRAMtable(){
+    for(int i=0;i<pow(2, ram_table_size);i++){
+        if(ram_table[i]==NULL){
+            cout << "-------------EMPTY---------------" << endl;
+        }
+        else{
+            printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
+            ram_table[i]->pid, ram_table[i]->virtual_address, i, ram_table[i]->arrival_time_stamp, ram_table[i]->recent_usage_time_stamp);
+        }
+    }
+} */
 
 void updatePageTableForNew(int pid, int vAddress, int ppn){
     string bitString = getBitRepresentation(vAddress);
@@ -177,6 +197,7 @@ void updatePageTableForOld(int pid, int ppn){
 int main(){
     // First read the process_list and allocate memory to the processes
     // Basically initialize the system
+    initialize_global_variables();
     initialize_tlb();
     initialize_ram();
     if(process_list.is_open()){
@@ -221,13 +242,15 @@ int main(){
             // printf("looking for the required entry in translation lookaside buffer\n");
             if(physical_address != -1){
                 // corresponding entry was found in TLB
-                // printf("Its a TLB hit, %d is accessed successfully\n", physical_address);
+                printf("Its a TLB hit, %d is accessed successfully\n", physical_address);
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-                // printTLBtable();
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-                // printRAMtable();
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                /* 
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                    printTLBtable();
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                    printRAMtable();
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n"); 
+                */
                 printf("------------------------------------------------\n");
                 continue;
             }
@@ -235,16 +258,17 @@ int main(){
             physical_address = processVirtualAddress(access_PID, access_address);
             if(physical_address != -1){
                 // required page was present in RAM
-                // printf("Memory access %d was succesfull\n", physical_address);
+                printf("Memory access %d was succesfull\n", physical_address);
                 tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, physical_address >> page_size, access_PID, access_index, access_index);
                 pair<tlb_entry*, int> old = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
-                // printf("new tlb entry is inserted at %d\n", old.second);
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-                // printTLBtable();
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-                // printRAMtable();
-                // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                /* 
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                    printTLBtable();
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                    printRAMtable();
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n"); 
+                */
                 printf("------------------------------------------------\n");
                 continue; 
             }
@@ -253,7 +277,6 @@ int main(){
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
             pair<ram_entry*, int> old = replacement(replacement_policy, ram_table, new_entry, access_index);
-            // printf("new ram entry is inserted at %d\n", old.second);
             // Now we need to update pageTables of two processes
             // one for which new entry has entered the ram - Also tlb needs to be updated for this
             // one for which already existing page has moved to hard disk now
@@ -265,12 +288,13 @@ int main(){
             updatePageTableForNew(access_PID, access_address, old.second);
             tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, old.second /*new physical address*/, access_PID, access_index, access_index);
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
-            // printf("new tlb entry is inserted at %d\n", oldTLB.second);
-            // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-            // printTLBtable();
-            // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
-            // printRAMtable();
-            // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+            /* 
+                printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                printTLBtable();
+                printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                printRAMtable();
+                printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n"); 
+            */
             printf("------------------------------------------------\n");
         }
         access_list.close();
