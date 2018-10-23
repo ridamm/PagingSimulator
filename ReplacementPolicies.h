@@ -3,11 +3,11 @@
 using namespace std;
 
 // Global variables for sizes (they are stored as log base 2)
-int logical_address_space = 21; //2 MB space
-int ram_size = 20; //1MB space
-int page_size = 11; //2kB
+int logical_address_space = 5;
+int ram_size = 3;
+int page_size = 0;
 int MAX_OFFSET=pow(2,page_size)-1;
-int tlb_size = 7; //2^7 entries
+int tlb_size = 2;
 
 struct tlb_entry{
     int virtual_address;

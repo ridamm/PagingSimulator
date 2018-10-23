@@ -1,8 +1,8 @@
-g++ inputGenerator.cpp -o inputGenerator
-inputGenerator.exe
-del inputGenerator.exe
+REM g++ inputGenerator.cpp -o inputGenerator
+REM inputGenerator.exe
+REM del inputGenerator.exe
 g++ simulator.cpp -o simulation
 simulation.exe
 del simulation.exe
-del access_list.txt
-del process_list.txt
+REM del access_list.txt
+REM del process_list.txt

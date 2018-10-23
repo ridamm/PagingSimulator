@@ -4,10 +4,10 @@ using namespace std;
 
 int ram_table_size = ram_size - page_size;
 int page_table_size = logical_address_space - page_size;
-int page_directory_size = (page_table_size + 2) - (page_size); // Assuming one page_table_entry takes 4 bytes of space
+int page_directory_size = (page_table_size) - (page_size); // Assuming one page_table_entry takes 1 bytes of space
 int ram_page_index = 0; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
-int replacement_policy = 2; //{0, 1, 2} for various algorithms
+int replacement_policy = 1; //{0, 1, 2} for various algorithms
 int pid_index = 0;
 vector<int> requiredMemory; // stores memory requirements for processes (in multiples of kB)
 
@@ -48,7 +48,7 @@ void initialize_page_directories_AND_page_tables(){
     }
     page_tables.resize(pid_index);
     for(int i=0;i<pid_index;i++){
-        int pages_required = ceil((requiredMemory[i])/(pow(2, page_size-10) * 1.0)); //-10 as requiredMemory is in KB
+        int pages_required = ceil((requiredMemory[i])/(pow(2, page_size) * 1.0));
         int page_ratio = pow(2, page_table_size - page_directory_size);
         int pages_required_in_directory = ceil(pages_required/(page_ratio*1.0));
         // Fill page_directory
@@ -129,6 +129,31 @@ void updateTLB(int pAddress){
     }
 }
 
+// void printTLBtable(){
+//     for(int i=0;i<pow(2, tlb_size);i++){
+//         if(tlb_table[i]==NULL){
+//             cout << "-------------EMPTY---------------" << endl;
+//         }
+//         else{
+//             printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
+//             tlb_table[i]->pid, tlb_table[i]->virtual_address, tlb_table[i]->physical_address,
+//             tlb_table[i]->arrival_time_stamp, tlb_table[i]->recent_usage_time_stamp);
+//         }
+//     }
+// }
+
+// void printRAMtable(){
+//     for(int i=0;i<pow(2, ram_table_size);i++){
+//         if(ram_table[i]==NULL){
+//             cout << "-------------EMPTY---------------" << endl;
+//         }
+//         else{
+//             printf("pid : %d    | vA : %d    | pA : %d    | at : %d    | rt : %d    \n", 
+//             ram_table[i]->pid, ram_table[i]->virtual_address, i, ram_table[i]->arrival_time_stamp, ram_table[i]->recent_usage_time_stamp);
+//         }
+//     }
+// }
+
 void updatePageTableForNew(int pid, int vAddress, int ppn){
     string bitString = getBitRepresentation(vAddress);
     string directory_string = bitString.substr(0, page_directory_size);
@@ -185,46 +210,63 @@ int main(){
             ss >> access_address;
             printf("process number %d has requested to access the virtual address : %d\n", access_PID, access_address);
             int physical_address = findInTLB(access_PID, access_address, access_index);
-            printf("looking for the required entry in translation lookaside buffer\n");
+            // printf("looking for the required entry in translation lookaside buffer\n");
             if(physical_address != -1){
                 // corresponding entry was found in TLB
-                printf("Its a TLB hit, %d is accessed successfully\n", physical_address);
+                // printf("Its a TLB hit, %d is accessed successfully\n", physical_address);
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                // printTLBtable();
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                // printRAMtable();
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
                 continue;
             }
-            printf("----> Ohh no, a TLB miss\n"); tlb_misses++;
+            printf("----> Ohh no, a TLB miss\n");
+            tlb_misses++;
             physical_address = processVirtualAddress(access_PID, access_address);
             if(physical_address != -1){
                 // required page was present in RAM
-                printf("Memory access %d was succesfull\n", physical_address);
+                // printf("Memory access %d was succesfull\n", physical_address);
                 tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, physical_address >> page_size, access_PID, access_index, access_index);
                 pair<tlb_entry*, int> old = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
-                printf("new tlb entry is inserted at %d\n", old.second);
+                // printf("new tlb entry is inserted at %d\n", old.second);
                 ram_table[physical_address/(pow(2, page_size))]->recent_usage_time_stamp = access_index;
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                // printTLBtable();
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                // printRAMtable();
+                // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
                 continue; 
             }
             // Handle page fault by updating ram, flushing TLB
-            printf("----> Page fault occured, flushing existing TLB, updating ram\n"); page_faults++;
+            printf("----> Page fault occured, updating existing TLB, updating ram\n");
+            page_faults++;
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
             pair<ram_entry*, int> old = replacement(replacement_policy, ram_table, new_entry, access_index);
-            printf("new ram entry is inserted at %d\n", old.second);
+            // printf("new ram entry is inserted at %d\n", old.second);
             // Now we need to update pageTables of two processes
             // one for which new entry has entered the ram - Also tlb needs to be updated for this
             // one for which already existing page has moved to hard disk now
-            updatePageTableForNew(access_PID, access_address, old.second);
             if(old.first != NULL){
                 //Actually some replacement took place
                 updatePageTableForOld(old.first->pid, old.second);
                 updateTLB(old.second);
             }
+            updatePageTableForNew(access_PID, access_address, old.second);
             tlb_entry* new_tlb_entry = new tlb_entry(access_address >> page_size, old.second /*new physical address*/, access_PID, access_index, access_index);
             pair<tlb_entry*, int> oldTLB = replacement(replacement_policy, tlb_table, new_tlb_entry, access_index);
-            printf("new tlb entry is inserted at %d\n", oldTLB.second);
+            // printf("new tlb entry is inserted at %d\n", oldTLB.second);
+            // printf("$$$$$$$$$$$$$$$$$$$$$$$$---TLB---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+            // printTLBtable();
+            // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+            // printRAMtable();
+            // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
         }
         access_list.close();
     }
-    printf("----------------------------------\n");
+    printf("---------------SUMMARY-------------------\n");
     printf("Total Number of TLB Misses  : %d\n", tlb_misses);
     printf("Total number of page faults : %d\n", page_faults);
 }
