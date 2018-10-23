@@ -7,7 +7,7 @@ int page_table_size = logical_address_space - page_size;
 int page_directory_size = (page_table_size) - (page_size); // Assuming one page_table_entry takes 1 bytes of space
 int ram_page_index = 0; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
-int replacement_policy = 1; //{0, 1, 2} for various algorithms
+int replacement_policy = 2; //{0, 1, 2} for various algorithms
 int pid_index = 0;
 vector<int> requiredMemory; // stores memory requirements for processes (in multiples of kB)
 
@@ -15,6 +15,7 @@ vector< tlb_entry* > tlb_table;
 vector< vector< page_table_entry* > > page_tables;
 vector< vector< page_table_entry* > > page_directories;
 vector< ram_entry* > ram_table;
+vector< pair<int,int> > summary;
 
 int page_faults = 0;
 int tlb_misses = 0;
@@ -195,6 +196,12 @@ int main(){
     // Allocate the memory in virual spaces linearly, first few virtual pages are assigned
     // only first few pages in page directory will be valid;
     // only the required pages will be initialized in page table
+    
+    //Initialize summary vector for final output
+    summary.resize(pid_index);
+    for(int i=0;i<pid_index;i++){
+        summary[i] = {0, 0};
+    }
 
     initialize_page_directories_AND_page_tables();
     // Now system has been initialized, now simulate according to the accesses;
@@ -203,6 +210,7 @@ int main(){
         string line;
         int access_index = 0; // will use it as a time_stamp for replacement policies
         while(getline(access_list, line)){
+            printf("------------------------------------------------\n");
             access_index++;
             stringstream ss(line);
             int access_PID, access_address;
@@ -220,10 +228,10 @@ int main(){
                 // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
                 // printRAMtable();
                 // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                printf("------------------------------------------------\n");
                 continue;
             }
-            printf("----> Ohh no, a TLB miss\n");
-            tlb_misses++;
+            printf("----> Ohh no, a TLB miss\n"); tlb_misses++; summary[access_PID].first++;
             physical_address = processVirtualAddress(access_PID, access_address);
             if(physical_address != -1){
                 // required page was present in RAM
@@ -237,11 +245,11 @@ int main(){
                 // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
                 // printRAMtable();
                 // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+                printf("------------------------------------------------\n");
                 continue; 
             }
             // Handle page fault by updating ram, flushing TLB
-            printf("----> Page fault occured, updating existing TLB, updating ram\n");
-            page_faults++;
+            printf("----> Page fault occured, updating existing TLB, updating ram\n"); page_faults++; summary[access_PID].second++;
             int virtual_base_address = (access_address/pow(2, page_size))*pow(2, page_size);
             ram_entry* new_entry = new ram_entry(access_PID, virtual_base_address, access_index, access_index);
             pair<ram_entry*, int> old = replacement(replacement_policy, ram_table, new_entry, access_index);
@@ -263,10 +271,15 @@ int main(){
             // printf("$$$$$$$$$$$$$$$$$$$$$$$$---RAM---$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
             // printRAMtable();
             // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n");
+            printf("------------------------------------------------\n");
         }
         access_list.close();
     }
-    printf("---------------SUMMARY-------------------\n");
+    printf("------------------SUMMARY----------------\n");
     printf("Total Number of TLB Misses  : %d\n", tlb_misses);
     printf("Total number of page faults : %d\n", page_faults);
+
+    for(int i=0;i<pid_index;i++){
+        printf("pid : %d      | tlbMisses : %d      | pageFaults : %d      \n", i, summary[i].first, summary[i].second);
+    }
 }
