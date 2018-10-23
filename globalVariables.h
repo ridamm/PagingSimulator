@@ -1,9 +1,14 @@
 #pragma once
+#include <bits/stdc++.h>
+using namespace std;
+
 // Global variables for sizes (they are stored as log base 2)
 int logical_address_space;
 int ram_size;
 int page_size;
 int tlb_size;
+
+unordered_map<int, int> pid_mapping;
 
 struct tlb_entry{
     int virtual_address;

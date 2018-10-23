@@ -110,6 +110,8 @@ pair<T*, int> replacement(int policy_type, vector<T*> &table, T* new_entry, int 
 	            ss >> search_PID;
 	            ss >> search_address;
 
+				search_PID = pid_mapping[search_PID];
+
 	            //Checking memory accesses that will be made after current access
 	            if(search_index>access_index)
 	            {
