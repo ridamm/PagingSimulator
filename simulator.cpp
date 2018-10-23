@@ -8,7 +8,7 @@ int page_table_size;
 int page_directory_size; // Assuming one page_table_entry takes 1 bytes of space
 int ram_page_index; //Index from where the ram pages are not assigned to any process; // Helpful for initializing the system;
 
-int replacement_policy = 2; //{0, 1, 2} for various algorithms
+int replacement_policy = 1; //{0, 1, 2} for various algorithms
 int pid_index = 0;
 vector<int> requiredMemory; // stores memory requirements for processes (in multiples of kB)
 
@@ -194,6 +194,10 @@ void updatePageTableForOld(int pid, int ppn){
     }
 }
 
+bool checkValidity(int pid, int vAddress){
+    return (vAddress <= requiredMemory[pid]);
+}
+
 int main(){
     // First read the process_list and allocate memory to the processes
     // Basically initialize the system
@@ -238,6 +242,12 @@ int main(){
             ss >> access_PID;
             ss >> access_address;
             printf("process number %d has requested to access the virtual address : %d\n", access_PID, access_address);
+            bool validAccess = checkValidity(access_PID, access_address);
+            if(!validAccess){
+                cout << "Invalid Access, Ignoring the Access" << endl;
+                printf("------------------------------------------------\n");
+                continue;
+            }
             int physical_address = findInTLB(access_PID, access_address, access_index);
             // printf("looking for the required entry in translation lookaside buffer\n");
             if(physical_address != -1){
