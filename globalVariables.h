@@ -8,7 +8,7 @@ int ram_size;
 int page_size;
 int tlb_size;
 
-unordered_map<int, int> pid_mapping;
+unordered_map<int, int> pid_mapping; // For storing PIDs, as PIDs can be random, simply storing in array doesn't work
 
 struct tlb_entry{
     int virtual_address;
