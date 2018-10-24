@@ -2,12 +2,12 @@
 
 The following code simulates the paging system present in modern day operating systems. Three main replacement algorithms are implemented for any TLB replacement/ Ram Replacement;
 
-###Replacement Policies Used :-
+### Replacement Policies Used :-
 1> FIFO
 2> LRU
 3> Optimal Greedy Technique (Note : This is not practically Implemented anywhere, just for simulation purposes)
 
-##Structure :-
+## Structure :-
 It implements two level paging i.e. one page directory and one page table.
 We are given two files :-
 1> Process file which contains the process ids and the corresponding space requirement, note this space requirement can't exceed that of the total virtual space provided by OS.
@@ -22,7 +22,7 @@ Few essential parameters are taken input at the begining of the code :
 
 An additional input generator file is provided which provides random memory requirement and random accesses
 
-##Output:-
+## Output:-
 For each access, the simulation is live tracked. It prints the corresponding TLB hit/miss, page fault etc.
 After the simulation is complete, a descriptive summary is presented in front of the user which shows the total number of TLB hits/ misses and page faults. Along with this, the same info is also presented for each of the process present in the simulation.
 
