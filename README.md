@@ -13,6 +13,8 @@ We are given two files :-
 1. Process file which contains the process ids and the corresponding space requirement, note this space requirement can't exceed that of the total virtual space provided by OS.
 2. Access file which contains the process ids and the corresponding requested memory access, note this should be a valid access (within memory as allocated by the OS in beginning), else the access is just ignored
 
+To initialize the system, memory requirements are kept contigous in their virtual address space. Initially TLB is empty and it will start filling up as the accesses start to happen. RAM is initialized as soon as the process start requesting memory (when we traverse process file). Till there is space in RAM, it is allocated space in RAM, else its been allocated in Swap Space *(Note : We have assumed swap space to be infinite enough for all memory requirements, hence its not separately handled, how pages are retrieved from or are stored to swap space is being abstraced in the current implementation)*. Initial space allocation in RAM is done contigously for each process, but as we start accessing the memory addresses, this won't remain the case. 
+
 Few essential parameters are taken input at the begining of the code :  
 1. Total Bits in virtual Address space (like 64 bit/32 bit systems you people might be using)
 2. Total Size of ram (in the log scale, i.e. for memory of size 2^k Bytes, specify k)
